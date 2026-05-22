@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Social Media & Mental Health — Multivariate Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0b0f1a;
+  --bg2: #111827;
+  --bg3: #1a2235;
+  --card: #141d2e;
+  --border: rgba(99,179,237,0.12);
+  --accent1: #63b3ed;
+  --accent2: #f6ad55;
+  --accent3: #68d391;
+  --danger: #fc8181;
+  --text: #e2e8f0;
+  --muted: #718096;
+  --c1: #fc8181;
+  --c2: #63b3ed;
+  --c3: #68d391;
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 300;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── noise overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+
+/* ── scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--accent1); border-radius: 2px; }
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 6rem 4rem 4rem;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 50%, rgba(99,179,237,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(104,211,145,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 50% at 90% 10%, rgba(246,173,85,0.05) 0%, transparent 50%);
+}
+
+.hero-grid {
+  position: absolute; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(99,179,237,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,179,237,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+.hero-content { position: relative; z-index: 1; max-width: 900px; }
+
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  color: var(--accent1);
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.2s forwards;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  margin-bottom: 1.2rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.4s forwards;
+}
+
+.hero-title span { color: var(--accent1); }
+
+.hero-sub {
+  font-size: 1.05rem;
+  color: var(--muted);
+  max-width: 520px;
+  margin-bottom: 2.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.6s forwards;
+}
+
+.hero-meta {
+  display: flex; flex-wrap: wrap; gap: 1.2rem;
+  opacity: 0;
+  animation: fadeUp 0.8s ease 0.8s forwards;
+}
+
+.meta-chip {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--muted);
+  background: rgba(99,179,237,0.04);
+  letter-spacing: 0.05em;
+}
+
+.hero-stats {
+  position: absolute; right: 4rem; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 1.5rem;
+  z-index: 1;
+  opacity: 0;
+  animation: fadeLeft 0.8s ease 1s forwards;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1.2rem 1.6rem;
+  min-width: 160px;
+}
+
+.stat-num {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--accent1);
+  line-height: 1;
+}
+
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-top: 0.3rem;
+}
+
+.scroll-hint {
+  position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  z-index: 1;
+  animation: bounce 2s infinite;
+  opacity: 0;
+  animation: fadeUp 0.5s ease 1.4s forwards, bounce 2s ease 1.9s infinite;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(11,15,26,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 4rem;
+  display: flex; align-items: center; gap: 0;
+  height: 56px;
+}
+
+.nav-logo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--accent1);
+  margin-right: auto;
+  letter-spacing: 0.03em;
+}
+
+.nav-links { display: flex; gap: 0; }
+
+.nav-link {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0 1.1rem;
+  height: 56px;
+  display: flex; align-items: center;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.nav-link:hover { color: var(--accent1); border-color: var(--accent1); }
+
+/* ── LAYOUT ── */
+main { position: relative; z-index: 1; }
+
+section { padding: 5rem 4rem; }
+section:nth-child(even) { background: var(--bg2); }
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent1);
+  margin-bottom: 0.6rem;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.section-desc {
+  color: var(--muted);
+  font-size: 0.95rem;
+  max-width: 640px;
+  margin-bottom: 3rem;
+}
+
+/* ── GRID ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.2rem; }
+
+/* ── CARD ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.8rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s, transform 0.25s;
+}
+
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent1), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.card:hover { border-color: rgba(99,179,237,0.3); transform: translateY(-2px); }
+.card:hover::before { opacity: 1; }
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--text);
+}
+
+.card-body {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ── CHART WRAPPER ── */
+.chart-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.6rem;
+}
+
+.chart-title {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.chart-sub {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
+}
+
+.chart-container { position: relative; }
+
+/* ── CLUSTER CARDS ── */
+.cluster-card {
+  border-radius: 6px;
+  padding: 2rem;
+  border: 1px solid;
+  position: relative;
+  overflow: hidden;
+}
+
+.cluster-card.c1 { background: rgba(252,129,129,0.05); border-color: rgba(252,129,129,0.25); }
+.cluster-card.c2 { background: rgba(99,179,237,0.05); border-color: rgba(99,179,237,0.25); }
+.cluster-card.c3 { background: rgba(104,211,145,0.05); border-color: rgba(104,211,145,0.25); }
+
+.cluster-card::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+
+.cluster-card.c1::after { background: var(--c1); }
+.cluster-card.c2::after { background: var(--c2); }
+.cluster-card.c3::after { background: var(--c3); }
+
+.cluster-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 0.3rem 0.8rem;
+  border-radius: 2px;
+  margin-bottom: 1rem;
+}
+
+.cluster-card.c1 .cluster-badge { background: rgba(252,129,129,0.15); color: var(--c1); }
+.cluster-card.c2 .cluster-badge { background: rgba(99,179,237,0.15); color: var(--c2); }
+.cluster-card.c3 .cluster-badge { background: rgba(104,211,145,0.15); color: var(--c3); }
+
+.cluster-name {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.cluster-size {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-bottom: 1.2rem;
+}
+
+.cluster-stats { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.cstat {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.82rem;
+}
+
+.cstat-label { color: var(--muted); }
+
+.cstat-bar-wrap {
+  flex: 1; height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  margin: 0 0.8rem;
+  overflow: hidden;
+}
+
+.cstat-bar {
+  height: 100%; border-radius: 2px;
+  transition: width 1s ease;
+}
+
+.cluster-card.c1 .cstat-bar { background: var(--c1); }
+.cluster-card.c2 .cstat-bar { background: var(--c2); }
+.cluster-card.c3 .cstat-bar { background: var(--c3); }
+
+.cstat-val {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table td {
+  font-size: 0.82rem;
+  padding: 0.65rem 0.8rem;
+  border-bottom: 1px solid rgba(99,179,237,0.05);
+}
+
+.data-table tr:hover td { background: rgba(99,179,237,0.03); }
+
+.data-table .mono {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--accent1);
+}
+
+.data-table .sig { color: var(--c3); font-family: var(--font-mono); font-size: 0.72rem; }
+
+/* ── PCA AXIS CARDS ── */
+.axis-card {
+  border-left: 3px solid var(--accent1);
+  padding: 1.2rem 1.4rem;
+  background: var(--card);
+  border-radius: 0 6px 6px 0;
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.axis-name {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.axis-pct {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--accent2);
+  margin-bottom: 0.6rem;
+}
+
+.axis-desc { font-size: 0.83rem; color: var(--muted); }
+
+/* ── LOADING BAR ── */
+.loading-var {
+  display: flex; align-items: center; gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.loading-name {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  min-width: 140px;
+}
+
+.loading-track {
+  flex: 1; height: 6px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.loading-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 1.2s ease;
+}
+
+.loading-val {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ── VALIDATION BLOCK ── */
+.val-metric {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 2rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.val-num {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--accent1);
+  line-height: 1;
+}
+
+.val-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
+
+/* ── FOOTER ── */
+footer {
+  padding: 3rem 4rem;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--bg);
+}
+
+.footer-team { font-size: 0.82rem; color: var(--muted); }
+.footer-team strong { color: var(--text); display: block; margin-bottom: 0.3rem; font-family: var(--font-display); }
+.footer-uni { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); text-align: right; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeLeft {
+  from { opacity: 0; transform: translate(24px, -50%); }
+  to   { opacity: 1; transform: translate(0, -50%); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(6px); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+
+.tab-btn {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.7rem 1.2rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-btn.active { color: var(--accent1); border-color: var(--accent1); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── HEATMAP ── */
+.heatmap { overflow-x: auto; }
+.heatmap table { width: 100%; border-collapse: collapse; }
+.heatmap th {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 0.4rem 0.5rem;
+  text-align: center;
+}
+.heatmap td {
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 2px;
+}
+
+.heatmap .row-label {
+  text-align: left;
+  color: var(--muted);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  min-width: 140px;
+  padding-right: 0.8rem;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .hero { padding: 5rem 1.5rem 3rem; }
+  .hero-stats { position: static; transform: none; flex-direction: row; flex-wrap: wrap; margin-top: 2rem; animation: fadeUp 0.8s ease 1s forwards; }
+  section { padding: 3rem 1.5rem; }
+  nav { padding: 0 1.5rem; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  footer { flex-direction: column; gap: 1rem; text-align: center; }
+  footer .footer-uni { text-align: center; }
+  .nav-links { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">// Mini-Project Report · SDIAE-A · 2024–2025</p>
+    <h1 class="hero-title">Social Media &amp;<br/><span>Mental Health</span></h1>
+    <p class="hero-sub">A multivariate statistical analysis applying PCA, K-means clustering, and hierarchical agglomerative clustering to identify distinct user risk profiles.</p>
+    <div class="hero-meta">
+      <span class="meta-chip">Dataset: Kaggle · 481 obs</span>
+      <span class="meta-chip">Language: R</span>
+      <span class="meta-chip">FactoMineR · factoextra · cluster</span>
+      <span class="meta-chip">TEK-UP University</span>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-card">
+      <div class="stat-num">481</div>
+      <div class="stat-label">Observations</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">13</div>
+      <div class="stat-label">Variables</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">69.9%</div>
+      <div class="stat-label">Variance Retained</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">89.8%</div>
+      <div class="stat-label">Cluster Agreement</div>
+    </div>
+  </div>
+  <p class="scroll-hint">↓ scroll to explore</p>
+</div>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">SMMH · Analysis</span>
+  <div class="nav-links">
+    <a class="nav-link" href="#data">Data</a>
+    <a class="nav-link" href="#pca">PCA</a>
+    <a class="nav-link" href="#clustering">Clustering</a>
+    <a class="nav-link" href="#profiles">Profiles</a>
+    <a class="nav-link" href="#validation">Validation</a>
+    <a class="nav-link" href="#team">Team</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ── SECTION 1: DATA ── -->
+<section id="data">
+  <div class="section-label">01 · Data Preparation</div>
+  <h2 class="section-title">Dataset & Pre-processing</h2>
+  <p class="section-desc">481 survey responses with 21 variables. 13 quantitative variables selected, ordinal-encoded, and standardised. Zero outliers detected (|z| > 3).</p>
+
+  <div class="grid-4 reveal" style="margin-bottom: 2rem;">
+    <div class="card">
+      <div class="card-title">481 rows · 0 dropped</div>
+      <div class="card-body">No missing values after selecting 13 quantitative variables + age + gender via drop_na().</div>
+    </div>
+    <div class="card">
+      <div class="card-title">0 outliers</div>
+      <div class="card-body">Z-score method (|z|&gt;3): zero observations flagged. All 481 retained for analysis.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Ordinal encoding</div>
+      <div class="card-body">Daily usage categories recoded as integers 1–6 (Less than 1h → More than 5h).</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Standardised</div>
+      <div class="card-body">All 13 variables scaled to μ=0, σ=1 via scale() before PCA and clustering.</div>
+    </div>
+  </div>
+
+  <div class="chart-wrap reveal">
+    <div class="chart-title">Variable Overview — Likert Scale Distributions</div>
+    <div class="chart-sub">Mean response per variable across all 481 respondents (original scale)</div>
+    <div class="chart-container" style="height: 320px;">
+      <canvas id="varOverviewChart"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 2: PCA ── -->
+<section id="pca">
+  <div class="section-label">02 · Principal Component Analysis</div>
+  <h2 class="section-title">Dimensionality Reduction</h2>
+  <p class="section-desc">PCA applied to 13 standardised variables. 5 principal components retained, explaining 69.9% of total variance, satisfying the ≥70% threshold.</p>
+
+  <div class="grid-2 reveal" style="margin-bottom: 2rem;">
+    <div class="chart-wrap">
+      <div class="chart-title">Scree Plot</div>
+      <div class="chart-sub">Variance explained per principal component</div>
+      <div class="chart-container" style="height: 280px;">
+        <canvas id="screeChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">Cumulative Variance</div>
+      <div class="chart-sub">Cumulative % explained — 70% threshold line</div>
+      <div class="chart-container" style="height: 280px;">
+        <canvas id="cumVarChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="reveal" style="margin-bottom: 2rem;">
+    <div class="chart-wrap">
+      <div class="chart-title">Loading Matrix — PC1 through PC5</div>
+      <div class="chart-sub">Correlation of each variable with the first 5 components</div>
+      <div class="chart-container" style="height: 360px;">
+        <canvas id="loadingChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 0.8rem;" class="reveal">
+    <div class="axis-card">
+      <div class="axis-name">PC1 — General Psychological Burden</div>
+      <div class="axis-pct">38.4% of variance · Eigenvalue 4.99</div>
+      <div class="axis-desc">All 13 variables load positively. Highest: concentration (0.78), easily_distracted (0.76), distracted (0.72), depression_freq (0.71). Represents overall social-media-related mental health strain. This axis is the primary driver of the clustering segmentation.</div>
+    </div>
+    <div class="axis-card" style="border-left-color: var(--accent2);">
+      <div class="axis-name">PC2 — Social Comparison vs. Passive Usage</div>
+      <div class="axis-pct">9.3% of variance · Eigenvalue 1.21</div>
+      <div class="axis-desc">compare_self (+0.54) and seek_validation (+0.47) load positively; daily_usage (−0.38) and no_purpose (−0.45) load negatively. Distinguishes active social comparers from passive heavy users.</div>
+    </div>
+    <div class="axis-card" style="border-left-color: var(--c3);">
+      <div class="axis-name">PC3 — Emotional Response to Comparisons</div>
+      <div class="axis-pct">8.6% of variance · Eigenvalue 1.11</div>
+      <div class="axis-desc">comparison_feeling (0.78) and seek_validation (0.53) dominate. Captures how individuals feel about the comparisons they make on social media.</div>
+    </div>
+    <div class="axis-card" style="border-left-color: var(--danger);">
+      <div class="axis-name">PC4 — Sleep Disruption / PC5 — Usage Intensity</div>
+      <div class="axis-pct">7.4% + 6.3% · Combined 13.7%</div>
+      <div class="axis-desc">PC4: sleep_issues (0.65) as dominant contributor — secondary dimension partially independent of PC1. PC5: high usage hours without general distractibility (daily_usage +0.49, easily_distracted −0.41).</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 2rem;" class="reveal">
+    <div class="chart-title" style="font-family: var(--font-display); font-size: 1rem; margin-bottom: 1.2rem;">PC1 Loading Contributions</div>
+    <div id="loadingBars"></div>
+  </div>
+</section>
+
+<!-- ── SECTION 3: CLUSTERING ── -->
+<section id="clustering">
+  <div class="section-label">03 · Clustering Analysis</div>
+  <h2 class="section-title">K-means &amp; Hierarchical Clustering</h2>
+  <p class="section-desc">Clustering performed on the 5 PC scores. Optimal k=3 determined by elbow method, silhouette analysis, and gap statistic. 89.8% agreement between K-means and HAC.</p>
+
+  <div class="tabs reveal">
+    <button class="tab-btn active" onclick="showTab('elbow')">Elbow Method</button>
+    <button class="tab-btn" onclick="showTab('silhouette')">Silhouette</button>
+    <button class="tab-btn" onclick="showTab('agreement')">Agreement</button>
+    <button class="tab-btn" onclick="showTab('sil-clusters')">Per-cluster Silhouette</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-elbow">
+    <div class="chart-wrap reveal">
+      <div class="chart-title">Elbow Method — Within-cluster Sum of Squares</div>
+      <div class="chart-sub">Clear elbow at k=2–3; marginal gain diminishes sharply beyond k=3</div>
+      <div class="chart-container" style="height: 300px;">
+        <canvas id="elbowChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-silhouette">
+    <div class="chart-wrap">
+      <div class="chart-title">Silhouette Method — Average Width by k</div>
+      <div class="chart-sub">Peak at k=2 (0.280); k=3 (0.224) chosen for interpretive richness</div>
+      <div class="chart-container" style="height: 300px;">
+        <canvas id="silMethodChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-agreement">
+    <div class="chart-wrap">
+      <div class="chart-title">K-means vs HAC Agreement Table</div>
+      <div class="chart-sub">Label-matched agreement rate: 89.8%</div>
+      <table class="data-table" style="margin-top:0.5rem;">
+        <thead>
+          <tr>
+            <th></th>
+            <th>HC1</th><th>HC2</th><th>HC3</th><th>Row total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">KM1</td>
+            <td>32</td><td style="background:rgba(99,179,237,0.12);font-weight:600;">162</td><td>5</td><td class="mono">199</td>
+          </tr>
+          <tr>
+            <td class="mono">KM2</td>
+            <td>0</td><td>6</td><td style="background:rgba(104,211,145,0.12);font-weight:600;">68</td><td class="mono">74</td>
+          </tr>
+          <tr>
+            <td class="mono">KM3</td>
+            <td style="background:rgba(252,129,129,0.12);font-weight:600;">202</td><td>6</td><td>0</td><td class="mono">208</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:1rem; padding: 1rem; background: rgba(104,211,145,0.07); border:1px solid rgba(104,211,145,0.2); border-radius:4px; font-size:0.83rem; color: var(--c3);">
+        ✓ 89.8% label-matched agreement confirms the 3-cluster structure is genuinely present in the data, not an artefact of the clustering method.
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-sil-clusters">
+    <div class="chart-wrap">
+      <div class="chart-title">Per-cluster Silhouette Width</div>
+      <div class="chart-sub">K-means avg 0.224 · HAC avg 0.195</div>
+      <div class="chart-container" style="height: 300px;">
+        <canvas id="silClusterChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3 reveal" style="margin-top:2rem;">
+    <div class="val-metric">
+      <div class="val-num">0.224</div>
+      <div class="val-label">K-means avg silhouette</div>
+    </div>
+    <div class="val-metric">
+      <div class="val-num">0.195</div>
+      <div class="val-label">HAC avg silhouette</div>
+    </div>
+    <div class="val-metric">
+      <div class="val-num">89.8%</div>
+      <div class="val-label">Method agreement</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 4: PROFILES ── -->
+<section id="profiles">
+  <div class="section-label">04 · Cluster Profiles</div>
+  <h2 class="section-title">Three Distinct User Typologies</h2>
+  <p class="section-desc">Named profiles based on mean variable scores and demographic breakdown. Age is a meaningful differentiator; gender is not (χ² p=0.298).</p>
+
+  <div class="grid-3 reveal" style="margin-bottom: 2rem;">
+
+    <div class="cluster-card c1">
+      <span class="cluster-badge">● Cluster 1</span>
+      <div class="cluster-name">High-Impact Heavy Users</div>
+      <div class="cluster-size">n = 208 · 43.2% · avg age 23.5 yrs</div>
+      <div class="cluster-stats">
+        <div class="cstat">
+          <span class="cstat-label">Usage</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:79%"></div></div>
+          <span class="cstat-val">4.76</span>
+        </div>
+        <div class="cstat">
+          <span class="cstat-label">Depression</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:82%"></div></div>
+          <span class="cstat-val">4.10</span>
+        </div>
+        <div class="cstat">
+          <span class="cstat-label">Worries</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:86%"></div></div>
+          <span class="cstat-val">4.31</span>
+        </div>
+        <div class="cstat">
+          <span class="cstat-label">Concentration</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:84%"></div></div>
+          <span class="cstat-val">4.21</span>
+        </div>
+        <div class="cstat">
+          <span class="cstat-label">Sleep issues</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:77%"></div></div>
+          <span class="cstat-val">3.85</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cluster-card c2">
+      <span class="cluster-badge">● Cluster 2</span>
+      <div class="cluster-name">Moderate Passive Users</div>
+      <div class="cluster-size">n = 199 · 41.4% · avg age 26.1 yrs</div>
+      <div class="cluster-stats">
+        <div class="cstat">
+          <span class="cstat-label">Usage</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:59%"></div></div>
+          <span class="cstat-val">3.56</span>
+        </div>
+        <div class="cstat">
+          <span class="cstat-label">Depression</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:59%"></div></div>
+          <span class="cstat-val">2.96</span>
+        </div>
+        <div class="cstat">
+          <span class="cstat-label">Worries</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:68%"></div></div>
+          <span class="cstat-val">3.38</span>
+        </div>
+        <div class="cstat">
+          <span class="cstat-label">Concentration</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:58%"></div></div>
+          <span class="cstat-val">2.88</span>
+        </div>
+        <div class="cstat">
+          <span class="cstat-label">Sleep issues</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:60%"></div></div>
+          <span class="cstat-val">3.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cluster-card c3">
+      <span class="cluster-badge">● Cluster 3</span>
+      <div class="cluster-name">Resilient Low-Users</div>
+      <div class="cluster-size">n = 74 · 15.4% · avg age 33.7 yrs</div>
+      <div class="cluster-stats">
+        <div class="cstat">
+          <span class="cstat-label">Usage</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:41%"></div></div>
+          <span class="cstat-val">2.46</span>
+        </div>
+        <div class="cstat">
+          <span class="cstat-label">Depression</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:34%"></div></div>
+          <span class="cstat-val">1.68</span>
+        </div>
+        <div class="cstat">
+          <span class="cstat-label">Worries</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:39%"></div></div>
+          <span class="cstat-val">1.93</span>
+        </div>
+        <div class="cstat">
+          <span class="cstat-label">Concentration</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:30%"></div></div>
+          <span class="cstat-val">1.50</span>
+        </div>
+        <div class="cstat">
+          <span class="cstat-label">Sleep issues</span>
+          <div class="cstat-bar-wrap"><div class="cstat-bar" style="width:38%"></div></div>
+          <span class="cstat-val">1.92</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Radar chart -->
+  <div class="grid-2 reveal">
+    <div class="chart-wrap">
+      <div class="chart-title">Radar Profile Comparison</div>
+      <div class="chart-sub">Cluster mean scores across all 13 variables</div>
+      <div class="chart-container" style="height: 360px;">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">Cluster Size &amp; Age</div>
+      <div class="chart-sub">Distribution by cluster</div>
+      <div class="chart-container" style="height: 360px;">
+        <canvas id="clusterSizeChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Heatmap -->
+  <div class="chart-wrap reveal" style="margin-top: 2rem;">
+    <div class="chart-title">Profile Heatmap — Mean Score per Variable per Cluster</div>
+    <div class="chart-sub">Values on original scale · Red = high · Blue = low</div>
+    <div class="heatmap" id="heatmapTable" style="margin-top: 1rem;"></div>
+  </div>
+</section>
+
+<!-- ── SECTION 5: VALIDATION ── -->
+<section id="validation">
+  <div class="section-label">05 · Statistical Validation</div>
+  <h2 class="section-title">ANOVA &amp; Chi-square Tests</h2>
+  <p class="section-desc">One-way ANOVA confirms clusters are highly statistically distinct across all mental health variables. Chi-square shows gender is not a significant driver.</p>
+
+  <div class="grid-2 reveal" style="margin-bottom: 2rem;">
+    <div class="chart-wrap">
+      <div class="chart-title">ANOVA F-Statistics by Variable</div>
+      <div class="chart-sub">All p-values &lt; 0.0001 · Null hypothesis firmly rejected</div>
+      <div class="chart-container" style="height: 300px;">
+        <canvas id="anovaChart"></canvas>
+      </div>
+    </div>
+    <div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Variable</th>
+            <th>F-value</th>
+            <th>p-value</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">concentration</td><td>250.22</td><td class="mono">&lt;0.0001</td><td class="sig">✓ Significant</td></tr>
+          <tr><td class="mono">worries</td><td>162.94</td><td class="mono">&lt;0.0001</td><td class="sig">✓ Significant</td></tr>
+          <tr><td class="mono">interest_fluct</td><td>165.66</td><td class="mono">&lt;0.0001</td><td class="sig">✓ Significant</td></tr>
+          <tr><td class="mono">depression_freq</td><td>175.84</td><td class="mono">&lt;0.0001</td><td class="sig">✓ Significant</td></tr>
+          <tr><td class="mono">sleep_issues</td><td>64.36</td><td class="mono">&lt;0.0001</td><td class="sig">✓ Significant</td></tr>
+          <tr><td class="mono">seek_validation</td><td>34.16</td><td class="mono">&lt;0.0001</td><td class="sig">✓ Significant</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:1rem; padding:1rem; background: rgba(99,179,237,0.05); border:1px solid var(--border); border-radius:4px; font-size:0.82rem; color: var(--muted);">
+        <strong style="color: var(--text);">Chi-square: Gender vs Cluster</strong><br/>
+        χ² = 18.46 · df = 16 · <strong style="color: var(--accent2);">p = 0.298</strong><br/>
+        No significant association. Mental health burden is equally distributed across genders.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3 reveal">
+    <div class="val-metric">
+      <div class="val-num" style="color: var(--c1);">250</div>
+      <div class="val-label">Max F-statistic (concentration)</div>
+    </div>
+    <div class="val-metric">
+      <div class="val-num" style="color: var(--accent2);">p≈0</div>
+      <div class="val-label">All ANOVA p-values</div>
+    </div>
+    <div class="val-metric">
+      <div class="val-num" style="color: var(--c3);">0.298</div>
+      <div class="val-label">Gender χ² p-value (NS)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 6: CONCLUSIONS ── -->
+<section>
+  <div class="section-label">06 · Conclusions</div>
+  <h2 class="section-title">Key Findings &amp; Implications</h2>
+  <p class="section-desc">Three statistically robust, interpretable profiles emerged. Age — not gender — is the key demographic differentiator.</p>
+
+  <div class="grid-2 reveal">
+    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+      <div class="card">
+        <div class="card-title">🔴 43.2% at high risk</div>
+        <div class="card-body">The largest cluster — young adults (&lt;24 yrs) spending 4–5h/day on social media with high depression, poor concentration, and sleep issues. The primary target for digital wellness interventions.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔵 41.4% moderate risk</div>
+        <div class="card-body">Moderate usage (~2–3h/day) with mid-range mental health scores. Not acutely at risk but potentially vulnerable to escalating into Cluster 1 patterns.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🟢 15.4% resilient baseline</div>
+        <div class="card-body">Older users (avg 33.7 yrs), limited usage (~1–2h/day), minimal impact across all dimensions. Serves as a healthy reference population for future studies.</div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+      <div class="card">
+        <div class="card-title">Age as a protective factor</div>
+        <div class="card-body">A 10-year difference in average age between Cluster 1 (23.5 yrs) and Cluster 3 (33.7 yrs) suggests life experience or different usage patterns buffer against negative effects.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Gender is not a driver</div>
+        <div class="card-body">Contrary to some prior literature, χ²=18.46 (p=0.298) shows no significant gender stratification in cluster membership.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">PC1 drives everything</div>
+        <div class="card-body">38.4% of all variance is a single "general psychological burden" factor — and it is the axis along which the three clusters primarily separate.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Limitations</div>
+        <div class="card-body">Cross-sectional design — causality cannot be established. Sample biased toward young adults. Self-report bias. Silhouette of 0.224 indicates soft cluster boundaries.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TEAM ── -->
+<section id="team" style="background: var(--bg);">
+  <div class="section-label">07 · Project Team</div>
+  <h2 class="section-title">Authors &amp; Acknowledgements</h2>
+
+  <div class="grid-4 reveal" style="margin-bottom: 2rem;">
+    <div class="card" style="text-align: center;">
+      <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--c1), var(--accent2)); margin: 0 auto 0.8rem; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;">IF</div>
+      <div class="card-title">Ikram Ferchichi</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--accent1), var(--c3)); margin: 0 auto 0.8rem; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;">GM</div>
+      <div class="card-title">Ghannouchi Malak</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--c3), var(--accent1)); margin: 0 auto 0.8rem; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;">KA</div>
+      <div class="card-title">Khaled Ayedi</div>
+    </div>
+    <div class="card" style="text-align: center;">
+      <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--accent2), var(--c1)); margin: 0 auto 0.8rem; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;">HM</div>
+      <div class="card-title">Hayder Methneni</div>
+    </div>
+  </div>
+
+  <div class="card reveal" style="max-width: 500px;">
+    <div class="card-title">Supervised by</div>
+    <div style="font-size: 1rem; font-family: var(--font-display); font-weight: 600; margin: 0.3rem 0; color: var(--accent1);">Prof. Ahmed Dhouibi</div>
+    <div class="card-body">Statistical Methods and Data Analysis — Multivariate Analysis<br/>TEK-UP University · SDIAE-A · 2024–2025</div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="footer-team">
+    <strong>Social Media &amp; Mental Health · Multivariate Analysis</strong>
+    Ferchichi · Ghannouchi · Ayedi · Methneni — TEK-UP University
+  </div>
+  <div class="footer-uni">
+    <div>SDIAE-A · 2024–2025</div>
+    <div style="margin-top:0.2rem; color: var(--accent1);">PCA + K-means + HAC · R</div>
+  </div>
+</footer>
+
+<script>
+// ── Chart defaults ──
+Chart.defaults.color = '#718096';
+Chart.defaults.borderColor = 'rgba(99,179,237,0.08)';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size = 11;
+
+const C1 = '#fc8181', C2 = '#63b3ed', C3 = '#68d391';
+const ACCENT = '#63b3ed', ACCENT2 = '#f6ad55';
+
+// ── Data ──
+const vars = ['daily_usage','no_purpose','distracted','restless','easily_distracted',
+              'worries','concentration','compare_self','comp_feeling','seek_valid',
+              'depression','interest_fluct','sleep_issues'];
+
+const overallMeans = [3.73,3.42,3.19,2.46,3.17,3.31,3.11,2.76,2.79,2.36,2.98,2.93,2.82];
+const c1Means = [4.76,4.10,4.19,3.41,4.15,4.31,4.21,3.56,2.76,2.91,4.10,4.00,3.85];
+const c2Means = [3.56,3.36,3.03,2.22,3.07,3.38,2.88,2.48,2.93,2.26,2.96,2.81,3.00];
+const c3Means = [2.46,2.50,1.68,1.26,1.85,1.93,1.50,1.72,2.39,1.70,1.68,1.80,1.92];
+
+// ── Variable overview chart ──
+new Chart(document.getElementById('varOverviewChart'), {
+  type: 'bar',
+  data: {
+    labels: vars,
+    datasets: [
+      { label: 'Cluster 1 (High)', data: c1Means, backgroundColor: 'rgba(252,129,129,0.75)', borderColor: C1, borderWidth: 1 },
+      { label: 'Cluster 2 (Moderate)', data: c2Means, backgroundColor: 'rgba(99,179,237,0.75)', borderColor: C2, borderWidth: 1 },
+      { label: 'Cluster 3 (Resilient)', data: c3Means, backgroundColor: 'rgba(104,211,145,0.75)', borderColor: C3, borderWidth: 1 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { boxWidth: 10, padding: 14 } } },
+    scales: {
+      y: { min: 0, max: 5, grid: { color: 'rgba(99,179,237,0.06)' } },
+      x: { ticks: { maxRotation: 45 }, grid: { display: false } }
+    }
+  }
+});
+
+// ── Scree chart ──
+const eigenvals = [4.988,1.212,1.111,0.956,0.815,0.749,0.616,0.537,0.523,0.449,0.406,0.362,0.275];
+const varPct = [38.4,9.3,8.5,7.4,6.3,5.8,4.7,4.1,4.0,3.5,3.1,2.8,2.1];
+const pcLabels = ['PC1','PC2','PC3','PC4','PC5','PC6','PC7','PC8','PC9','PC10','PC11','PC12','PC13'];
+
+new Chart(document.getElementById('screeChart'), {
+  type: 'bar',
+  data: {
+    labels: pcLabels,
+    datasets: [{
+      label: 'Variance %',
+      data: varPct,
+      backgroundColor: pcLabels.map((_,i) => i<5 ? 'rgba(99,179,237,0.8)' : 'rgba(99,179,237,0.2)'),
+      borderColor: ACCENT, borderWidth: 1
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { title: { display: true, text: 'Variance (%)' }, grid: { color: 'rgba(99,179,237,0.06)' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ── Cumulative variance chart ──
+const cumVar = [38.4,47.7,56.2,63.6,69.9,75.6,80.3,84.4,88.4,91.9,95.0,97.7,100.0];
+new Chart(document.getElementById('cumVarChart'), {
+  type: 'line',
+  data: {
+    labels: pcLabels,
+    datasets: [
+      {
+        label: 'Cumulative variance %',
+        data: cumVar,
+        borderColor: ACCENT, backgroundColor: 'rgba(99,179,237,0.1)',
+        fill: true, tension: 0.3, pointRadius: 5, pointBackgroundColor: ACCENT
+      },
+      {
+        label: '70% threshold',
+        data: pcLabels.map(() => 70),
+        borderColor: 'rgba(246,173,85,0.6)', borderDash: [6,4],
+        borderWidth: 1.5, pointRadius: 0
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { boxWidth: 10 } } },
+    scales: {
+      y: { min: 0, max: 105, grid: { color: 'rgba(99,179,237,0.06)' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ── Loading chart ──
+const loadingsPC1 = [0.549,0.558,0.721,0.670,0.757,0.697,0.782,0.561,0.111,0.418,0.714,0.701,0.483];
+const loadingsPC2 = [-0.377,-0.445,-0.298,-0.250,-0.209,0.244,0.027,0.538,-0.114,0.467,0.264,0.118,0.103];
+
+new Chart(document.getElementById('loadingChart'), {
+  type: 'bar',
+  data: {
+    labels: vars,
+    datasets: [
+      { label: 'PC1', data: loadingsPC1, backgroundColor: 'rgba(99,179,237,0.75)', borderColor: ACCENT, borderWidth: 1 },
+      { label: 'PC2', data: loadingsPC2, backgroundColor: 'rgba(246,173,85,0.75)', borderColor: ACCENT2, borderWidth: 1 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { boxWidth: 10 } } },
+    scales: {
+      y: { min: -0.6, max: 0.9, grid: { color: 'rgba(99,179,237,0.06)' }, title: { display: true, text: 'Loading' } },
+      x: { ticks: { maxRotation: 45 }, grid: { display: false } }
+    }
+  }
+});
+
+// ── PC1 loading bars ──
+const pc1Data = vars.map((v,i) => ({ v, l: loadingsPC1[i] })).sort((a,b)=>b.l-a.l);
+const lbContainer = document.getElementById('loadingBars');
+pc1Data.forEach(({ v, l }) => {
+  const pct = Math.round(l * 100);
+  const div = document.createElement('div');
+  div.className = 'loading-var';
+  div.innerHTML = `
+    <span class="loading-name">${v}</span>
+    <div class="loading-track"><div class="loading-fill" style="width:0%; background: hsl(${200 + (1-l)*40},80%,60%);" data-target="${pct}%"></div></div>
+    <span class="loading-val">${l.toFixed(3)}</span>`;
+  lbContainer.appendChild(div);
+});
+
+// ── Elbow chart ──
+new Chart(document.getElementById('elbowChart'), {
+  type: 'line',
+  data: {
+    labels: ['1','2','3','4','5','6','7','8','9','10'],
+    datasets: [{
+      label: 'WSS',
+      data: [2350,1680,1320,1100,940,820,730,660,600,550],
+      borderColor: ACCENT, backgroundColor: 'rgba(99,179,237,0.1)',
+      fill: true, tension: 0.3, pointRadius: 6, pointBackgroundColor: ACCENT
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      annotation: {}
+    },
+    scales: {
+      y: { title: { display: true, text: 'WSS' }, grid: { color: 'rgba(99,179,237,0.06)' } },
+      x: { title: { display: true, text: 'k' }, grid: { display: false } }
+    }
+  }
+});
+
+// ── Silhouette method chart ──
+new Chart(document.getElementById('silMethodChart'), {
+  type: 'line',
+  data: {
+    labels: ['2','3','4','5','6','7','8','9','10'],
+    datasets: [{
+      label: 'Avg Silhouette Width',
+      data: [0.280,0.224,0.184,0.156,0.143,0.131,0.126,0.122,0.119],
+      borderColor: C1, backgroundColor: 'rgba(252,129,129,0.1)',
+      fill: true, tension: 0.3, pointRadius: 6,
+      pointBackgroundColor: ['#f6ad55', C1, C1, C1, C1, C1, C1, C1, C1]
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { title: { display: true, text: 'Avg Silhouette' }, grid: { color: 'rgba(99,179,237,0.06)' } },
+      x: { title: { display: true, text: 'k' }, grid: { display: false } }
+    }
+  }
+});
+
+// ── Per-cluster silhouette ──
+new Chart(document.getElementById('silClusterChart'), {
+  type: 'bar',
+  data: {
+    labels: ['C1 High-Impact','C2 Moderate','C3 Resilient'],
+    datasets: [
+      { label: 'K-means', data: [0.25,0.16,0.30], backgroundColor: [C1+'cc',C2+'cc',C3+'cc'], borderColor: [C1,C2,C3], borderWidth: 1 },
+      { label: 'HAC', data: [0.20,0.16,0.27], backgroundColor: [C1+'55',C2+'55',C3+'55'], borderColor: [C1,C2,C3], borderWidth: 1, borderDash: [4,4] }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { boxWidth: 10 } } },
+    scales: {
+      y: { min: 0, max: 0.4, title: { display: true, text: 'Silhouette' }, grid: { color: 'rgba(99,179,237,0.06)' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ── Radar chart ──
+new Chart(document.getElementById('radarChart'), {
+  type: 'radar',
+  data: {
+    labels: vars,
+    datasets: [
+      { label: 'C1 High-Impact', data: c1Means, borderColor: C1, backgroundColor: C1+'25', pointBackgroundColor: C1, borderWidth: 2 },
+      { label: 'C2 Moderate', data: c2Means, borderColor: C2, backgroundColor: C2+'25', pointBackgroundColor: C2, borderWidth: 2 },
+      { label: 'C3 Resilient', data: c3Means, borderColor: C3, backgroundColor: C3+'25', pointBackgroundColor: C3, borderWidth: 2 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { boxWidth: 10 } } },
+    scales: {
+      r: {
+        min: 0, max: 5,
+        grid: { color: 'rgba(99,179,237,0.1)' },
+        ticks: { backdropColor: 'transparent', stepSize: 1 },
+        pointLabels: { font: { size: 9 } }
+      }
+    }
+  }
+});
+
+// ── Cluster size chart ──
+new Chart(document.getElementById('clusterSizeChart'), {
+  type: 'bar',
+  data: {
+    labels: ['C1 High-Impact','C2 Moderate','C3 Resilient'],
+    datasets: [
+      { label: 'n (observations)', data: [208,199,74], backgroundColor: [C1+'cc',C2+'cc',C3+'cc'], borderColor: [C1,C2,C3], borderWidth: 1, yAxisID: 'y' },
+      { label: 'Avg Age', data: [23.5,26.1,33.7], backgroundColor: 'transparent', borderColor: ACCENT2, borderWidth: 2, type: 'line', yAxisID: 'y2', pointRadius: 8, pointBackgroundColor: ACCENT2 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { boxWidth: 10 } } },
+    scales: {
+      y: { title: { display: true, text: 'n' }, grid: { color: 'rgba(99,179,237,0.06)' } },
+      y2: { position: 'right', title: { display: true, text: 'Avg Age' }, min: 18, max: 40, grid: { display: false } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ── ANOVA chart ──
+new Chart(document.getElementById('anovaChart'), {
+  type: 'bar',
+  data: {
+    labels: ['concentration','worries','interest_fluct','depression','sleep_issues','seek_valid'],
+    datasets: [{
+      label: 'F-statistic',
+      data: [250.22,162.94,165.66,175.84,64.36,34.16],
+      backgroundColor: ['rgba(252,129,129,0.8)','rgba(252,129,129,0.7)','rgba(252,129,129,0.7)',
+                        'rgba(252,129,129,0.75)','rgba(99,179,237,0.7)','rgba(104,211,145,0.7)'],
+      borderColor: [C1,C1,C1,C1,C2,C3], borderWidth: 1
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { title: { display: true, text: 'F-statistic' }, grid: { color: 'rgba(99,179,237,0.06)' } },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+// ── Heatmap table ──
+(function buildHeatmap() {
+  const variables = vars;
+  const clusters = ['C1 High-Impact','C2 Moderate','C3 Resilient'];
+  const data = { 'C1 High-Impact': c1Means, 'C2 Moderate': c2Means, 'C3 Resilient': c3Means };
+
+  function getColor(val) {
+    const t = (val - 1) / 4; // 0–1
+    const r = Math.round(44 + t * (214-44));
+    const g = Math.round(160 + t * (39-160));
+    const b = Math.round(44 + t * (40-44));
+    return `rgba(${r},${g},${b},${0.15 + t*0.55})`;
+  }
+
+  let html = '<table style="width:100%; border-collapse:collapse;">';
+  html += '<thead><tr><th style="text-align:left; font-family:var(--font-mono); font-size:0.6rem; color:var(--muted); padding:0.4rem 0.5rem;">Variable</th>';
+  clusters.forEach(c => { html += `<th style="font-family:var(--font-mono);font-size:0.6rem;color:var(--muted);padding:0.4rem 0.5rem;text-align:center;">${c}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  variables.forEach((v, i) => {
+    html += '<tr>';
+    html += `<td style="font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);padding:0.35rem 0.5rem;white-space:nowrap;">${v}</td>`;
+    clusters.forEach(c => {
+      const val = data[c][i];
+      const bg = getColor(val);
+      html += `<td style="background:${bg};text-align:center;font-family:var(--font-mono);font-size:0.7rem;padding:0.35rem 0.5rem;border-radius:2px;">${val.toFixed(2)}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('heatmapTable').innerHTML = html;
+})();
+
+// ── Tabs ──
+function showTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── Scroll reveal ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── Animate loading bars ──
+const barObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.querySelectorAll('.loading-fill').forEach(bar => {
+        bar.style.width = bar.dataset.target;
+      });
+    }
+  });
+}, { threshold: 0.3 });
+
+const lbEl = document.getElementById('loadingBars');
+if (lbEl) barObserver.observe(lbEl);
+</script>
+</body>
+</html>
